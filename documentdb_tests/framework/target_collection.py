@@ -74,6 +74,23 @@ class CustomCollection(TargetCollection):
 
 
 @dataclass(frozen=True)
+class ViewOnCustomCollection(TargetCollection):
+    """A view on a custom collection created with arbitrary options."""
+
+    source_options: dict[str, Any] = field(default_factory=dict)
+
+    def resolve(self, db: Database, collection: Collection) -> Collection:
+        src_name = f"{collection.name}_custom_src"
+        db.command("create", src_name, **self.source_options)
+        view_name = f"{collection.name}_custom_view"
+        db.command("create", view_name, viewOn=src_name, pipeline=[])
+        return db[view_name]
+
+    def writable(self, source: Collection, resolved: Collection) -> Collection:
+        return source.database[f"{source.name}_custom_src"]
+
+
+@dataclass(frozen=True)
 class CappedCollection(TargetCollection):
     """A capped collection."""
 
