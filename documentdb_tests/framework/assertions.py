@@ -74,11 +74,11 @@ def _sort_if_list(value):
 def _sort_fields(docs, fields):
     """Sort list values for the named fields in each document."""
     if isinstance(docs, dict):
-        docs = dict(docs)
-        for f in fields:
-            if f in docs:
-                docs[f] = _sort_if_list(docs[f])
-        return docs
+        doc = dict(docs)
+        for field in fields:
+            if field in doc:
+                doc[field] = _sort_if_list(doc[field])
+        return doc
     sorted_docs = []
     for doc in docs:
         doc = dict(doc)
