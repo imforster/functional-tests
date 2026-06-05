@@ -82,7 +82,7 @@ INPUT_TYPE_TESTS: list[UpdateTestCase] = [
         setup_docs=[{"_id": 1, "val": MaxKey()}],
         query={"_id": 1},
         update={"$min": {"val": Binary(b"\x00\x01")}},
-        expected={"_id": 1, "val": Binary(b"\x00\x01")},
+        expected={"_id": 1, "val": b"\x00\x01"},
         msg="$min should accept Binary as comparison value",
     ),
     UpdateTestCase(
