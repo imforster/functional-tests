@@ -8,7 +8,7 @@ import math
 import pprint
 from typing import Any, Callable, Dict, Optional, Union
 
-from bson import Decimal128, Int64
+from bson import Binary, Decimal128, Int64
 
 from documentdb_tests.framework.infra_exceptions import INFRA_EXCEPTION_TYPES as _INFRA_TYPES
 from documentdb_tests.framework.property_checks import _FIELD_ABSENT, Check, PerDoc
@@ -54,6 +54,9 @@ def _strict_equal(a: Any, b: Any) -> bool:
 
     # Reject cross-type numeric comparisons.
     if type(a) is not type(b):
+        # PyMongo returns Binary subtype 0 as plain bytes on read.
+        if isinstance(a, (bytes, Binary)) and isinstance(b, (bytes, Binary)):
+            return bytes(a) == bytes(b)
         if isinstance(a, _NUMERIC_BSON_TYPES) and isinstance(b, _NUMERIC_BSON_TYPES):
             return False
         return bool(a == b)
