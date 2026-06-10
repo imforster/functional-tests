@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from functools import reduce
-from typing import Any, List
+from typing import Any, List, cast
 
 import pytest
 from bson import (
@@ -128,7 +128,7 @@ AGGREGATE_PIPELINE_ACCEPTANCE_TESTS: list[CommandTestCase] = [
             "pipeline": reduce(  # type: ignore[dict-item]
                 lambda p, i: [{"$lookup": {"from": ctx.collection, "pipeline": p, "as": f"j{i}"}}],
                 range(20),
-                List[Any]([{"$addFields": {"x": 1}}]),
+                cast(List[Any], [{"$addFields": {"x": 1}}]),
             ),
             "cursor": {},
         },
@@ -143,7 +143,7 @@ AGGREGATE_PIPELINE_ACCEPTANCE_TESTS: list[CommandTestCase] = [
             "pipeline": reduce(  # type: ignore[dict-item]
                 lambda p, _: [{"$unionWith": {"coll": ctx.collection, "pipeline": p}}],
                 range(20),
-                List[Any]([{"$addFields": {"x": 1}}]),
+                cast(List[Any], [{"$addFields": {"x": 1}}]),
             ),
             "cursor": {},
         },
