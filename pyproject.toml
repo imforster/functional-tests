@@ -30,6 +30,11 @@ exclude = [
     '.venv',
     'build',
     'dist',
+    # Directories with hyphens in their names are not valid Python package names.
+    'query-and-write',
+    'data-types',
+    'read-concern',
+    'write-concern',
 ]
 
 [tool.pytest.ini_options]
