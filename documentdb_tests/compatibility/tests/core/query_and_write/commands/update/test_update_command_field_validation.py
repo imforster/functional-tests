@@ -10,6 +10,7 @@ import pytest
 from documentdb_tests.framework.assertions import assertResult
 from documentdb_tests.framework.error_codes import (
     FAILED_TO_PARSE_ERROR,
+    INVALID_LENGTH_ERROR,
     INVALID_NAMESPACE_ERROR,
     MISSING_FIELD_ERROR,
     TYPE_MISMATCH_ERROR,
@@ -87,7 +88,7 @@ TESTS: list[FieldValidationTest] = [
     FieldValidationTest(
         "empty_updates_array",
         command=None,
-        error_code=16,
+        error_code=INVALID_LENGTH_ERROR,
         msg="update should reject empty updates array.",
     ),
 ]

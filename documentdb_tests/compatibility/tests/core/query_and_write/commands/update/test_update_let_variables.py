@@ -6,6 +6,7 @@ usage in query filters and pipeline updates.
 """
 
 from documentdb_tests.framework.assertions import assertFailureCode, assertSuccess
+from documentdb_tests.framework.error_codes import UPDATE_C_FIELD_REQUIRES_PIPELINE_ERROR
 from documentdb_tests.framework.executor import execute_command
 
 
@@ -84,7 +85,7 @@ def test_update_c_field_with_non_pipeline_u_errors(collection):
             ],
         },
     )
-    assertFailureCode(result, 51198)
+    assertFailureCode(result, UPDATE_C_FIELD_REQUIRES_PIPELINE_ERROR)
 
 
 def test_update_let_empty_document_no_error(collection):
