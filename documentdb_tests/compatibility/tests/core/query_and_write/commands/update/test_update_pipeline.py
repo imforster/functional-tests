@@ -5,6 +5,8 @@ Validates pipeline updates with $set, $unset, $replaceWith, $replaceRoot,
 disallowed stages, and pipeline with expressions.
 """
 
+import pytest
+
 from documentdb_tests.framework.assertions import assertFailureCode, assertSuccess
 from documentdb_tests.framework.error_codes import INVALID_OPTIONS_ERROR
 from documentdb_tests.framework.executor import execute_command
@@ -120,40 +122,48 @@ def test_update_pipeline_empty_array_no_change(collection):
     assertSuccess(result, {"ok": 1.0, "n": 1, "nModified": 0}, raw_res=True)
 
 
-def test_update_pipeline_disallowed_stage_group(collection):
-    """Test pipeline with disallowed $group stage errors."""
-    collection.insert_one({"_id": 1, "x": 1})
-    result = execute_command(
-        collection,
+# Only $addFields/$set, $project/$unset, and $replaceRoot/$replaceWith are
+# allowed in pipeline updates. Every other stage is rejected with
+# INVALID_OPTIONS_ERROR. Stages with required fields are given minimal valid
+# arguments to ensure the rejection is for "not allowed", not "missing field".
+_DISALLOWED_STAGE_PARAMS = [
+    pytest.param({"$group": {"_id": "$x"}}, id="group"),
+    pytest.param({"$match": {"x": 1}}, id="match"),
+    pytest.param({"$sort": {"x": 1}}, id="sort"),
+    pytest.param(
+        {"$lookup": {"from": "other", "localField": "x", "foreignField": "x", "as": "r"}},
+        id="lookup",
+    ),
+    pytest.param({"$out": "other"}, id="out"),
+    pytest.param({"$merge": {"into": "other"}}, id="merge"),
+    pytest.param({"$facet": {"a": [{"$count": "n"}]}}, id="facet"),
+    pytest.param({"$unionWith": {"coll": "other"}}, id="unionWith"),
+    pytest.param({"$geoNear": {"near": [0, 0], "distanceField": "d"}}, id="geoNear"),
+    pytest.param(
         {
-            "update": collection.name,
-            "updates": [{"q": {"_id": 1}, "u": [{"$group": {"_id": "$x"}}]}],
+            "$graphLookup": {
+                "from": "other",
+                "startWith": "$x",
+                "connectFromField": "x",
+                "connectToField": "x",
+                "as": "r",
+            }
         },
-    )
-    assertFailureCode(result, INVALID_OPTIONS_ERROR)
+        id="graphLookup",
+    ),
+    pytest.param({"$bucket": {"groupBy": "$x", "boundaries": [0, 10]}}, id="bucket"),
+]
 
 
-def test_update_pipeline_disallowed_stage_match(collection):
-    """Test pipeline with disallowed $match stage errors."""
+@pytest.mark.parametrize("stage", _DISALLOWED_STAGE_PARAMS)
+def test_update_pipeline_disallowed_stage(collection, stage):
+    """Test pipeline update rejects stages not in the allowed set."""
     collection.insert_one({"_id": 1, "x": 1})
     result = execute_command(
         collection,
         {
             "update": collection.name,
-            "updates": [{"q": {"_id": 1}, "u": [{"$match": {"x": 1}}]}],
-        },
-    )
-    assertFailureCode(result, INVALID_OPTIONS_ERROR)
-
-
-def test_update_pipeline_disallowed_stage_sort(collection):
-    """Test pipeline with disallowed $sort stage errors."""
-    collection.insert_one({"_id": 1, "x": 1})
-    result = execute_command(
-        collection,
-        {
-            "update": collection.name,
-            "updates": [{"q": {"_id": 1}, "u": [{"$sort": {"x": 1}}]}],
+            "updates": [{"q": {"_id": 1}, "u": [stage]}],
         },
     )
     assertFailureCode(result, INVALID_OPTIONS_ERROR)
