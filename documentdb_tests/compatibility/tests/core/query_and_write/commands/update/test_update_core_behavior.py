@@ -199,14 +199,23 @@ def test_update_success_response_no_write_concern_error(collection):
 
 # Property [BSON Type Pass-Through]: $set must store and round-trip every BSON type
 # without coercion or data loss.
+# PyMongo coerces Binary subtype 0 to plain bytes on read, so the expected value
+# for bin_data must be raw bytes even though the stored value is Binary.
 _BSON_TYPE_PASSTHROUGH_PARAMS = [
-    pytest.param(bson_type, value, id=bson_type.value)
+    pytest.param(
+        bson_type,
+        value,
+        b"\x00\x01\x02" if bson_type == BsonType.BIN_DATA else value,
+        id=bson_type.value,
+    )
     for bson_type, value in BSON_TYPE_SAMPLES.items()
 ]
 
 
-@pytest.mark.parametrize("bson_type,value", _BSON_TYPE_PASSTHROUGH_PARAMS)
-def test_update_set_bson_type_passthrough(collection, bson_type: BsonType, value: Any):
+@pytest.mark.parametrize("bson_type,value,expected", _BSON_TYPE_PASSTHROUGH_PARAMS)
+def test_update_set_bson_type_passthrough(
+    collection, bson_type: BsonType, value: Any, expected: Any
+):
     """Test $set preserves each BSON type exactly when read back via find."""
     collection.insert_one({"_id": 1})
     execute_command(
@@ -216,6 +225,6 @@ def test_update_set_bson_type_passthrough(collection, bson_type: BsonType, value
     result = execute_command(collection, {"find": collection.name, "filter": {"_id": 1}})
     assertSuccess(
         result,
-        [{"_id": 1, "v": value}],
+        [{"_id": 1, "v": expected}],
         msg=f"$set should preserve {bson_type.value} without coercion.",
     )
