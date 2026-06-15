@@ -213,5 +213,8 @@ __marimo__/
 .test-results/
 .idea/
 
+# Graph output
+graphify-out/
+
 # Local pre-commit config (not committed)
 .pre-commit-config.local.yaml
